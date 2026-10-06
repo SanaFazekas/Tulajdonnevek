@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A magyar tulajdonnevek helyesírása</title>
+    <style>
+        :root {
+            --primary: #2980B9;
+            --secondary: #3498DB;
+            --bg-color: #ECF0F1;
+            --panel-bg: #FFFFFF;
+            --text-color: #2C3E50;
+            --success: #27AE60;
+            --danger: #C0392B;
+            --border: #BDC3C7;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Settings */
+        .sidebar {
+            width: 390px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin: 0;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        select, input[type="text"] {
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: #EAEDED;
+            border-radius: 6px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-dark { background: var(--text-color); }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .app-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Summary Banner */
+        .summary-banner {
+            background: #EBF5FB;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .summary-banner h3 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* Task List Layout */
+        .tasks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 950px;
+            margin-bottom: 20px;
+        }
+
+        .task-card {
+            background: white;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .task-main-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.02rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Input styles for Level 2 */
+        .letter-input {
+            width: 38px !important;
+            height: 38px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--secondary);
+            border-radius: 4px;
+            background: #F4F6F7;
+            display: inline-block;
+            margin: 0 2px;
+        }
+
+        /* Step-by-step solution breakdown box */
+        .solution-breakdown {
+            background-color: #FDEDEC;
+            border-left: 4px solid var(--danger);
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #78281F;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .solution-breakdown strong {
+            color: var(--danger);
+        }
+
+        /* Group / Projection Mode */
+        .group-mode .task-card {
+            font-size: 1.2rem;
+            padding: 20px 24px;
+            border: 2px solid var(--primary);
+        }
+
+        /* Statistics Table */
+        .stats-wrapper {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 5px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        @media print {
+            .sidebar, .header-bar button, .summary-banner, #submit-container, .solution-breakdown {
+                display: none !important;
+            }
+            body {
+                height: auto;
+                background: white;
+            }
+            .main-content {
+                padding: 0;
+                overflow: visible;
+            }
+            .task-card {
+                border: 1px solid #000;
+                box-shadow: none;
+            }
+            input {
+                border: none;
+                border-bottom: 1px solid #000;
+                background: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR / BEÁLLÍTÁSOK -->
+    <div class="sidebar">
+        <h2>⚙️ Tulajdonnevek - Beállítások</h2>
+
+        <div class="form-group">
+            <label>Munkamód:</label>
+            <div class="mode-toggle">
+                <button id="btn-mode-ind" class="mode-btn active" onclick="setWorkMode('individual')">Egyéni</button>
+                <button id="btn-mode-grp" class="mode-btn" onclick="setWorkMode('group')">Csoportos</button>
+            </div>
+        </div>
+
+        <div class="form-group" id="student-name-group">
+            <label for="student-name">Tanuló neve:</label>
+            <input type="text" id="student-name" placeholder="Írd be a neved...">
+        </div>
+
+        <div class="form-group">
+            <label for="topic-select">Feladat típusa / Szint:</label>
+            <select id="topic-select" onchange="generateNewSeries()">
+                <option value="level1">1. szint: Tulajdonnév fajtája (Csoportosítás)</option>
+                <option value="level2">2. szint: Helyesírás mondatban (Kezdőbetűk)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="count-select">Feladatok száma:</label>
+            <select id="count-select" onchange="generateNewSeries()">
+                <option value="5" selected>5 feladat</option>
+                <option value="10">10 feladat</option>
+                <option value="15">15 feladat</option>
+            </select>
+        </div>
+
+        <button class="btn btn-success" onclick="generateNewSeries()">Új feladatsor 🔄</button>
+
+        <div style="margin-top: 10px;">
+            <h2>📊 Statisztika</h2>
+            <div class="stats-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Név</th>
+                            <th>Szint</th>
+                            <th>Pont</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-tbody"></tbody>
+                </table>
+            </div>
+            <div style="display: flex; gap: 5px; margin-top: 8px;">
+                <button class="btn btn-dark" style="flex: 1;" onclick="downloadPDF()">Letöltés PDF-ben 📄</button>
+                <button class="btn btn-danger" style="flex: 1;" onclick="clearStats()">Törlés 🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-content" id="main-content-area">
+        <div class="header-bar">
+            <div class="app-title">A magyar tulajdonnevek helyesírása (12 éveseknek)</div>
+            <div id="display-student-info" style="font-weight: bold; font-size: 1.1rem;"></div>
+        </div>
+
+        <div id="summary-banner" class="summary-banner">
+            <h3 id="summary-title">Eredményértékelés</h3>
+            <div id="summary-details" style="font-weight: 600;"></div>
+        </div>
+
+        <div id="tasks-wrapper" class="tasks-container"></div>
+
+        <div id="submit-container" style="margin-top: 10px; display: flex; gap: 10px;">
+            <button id="btn-check" class="btn btn-success" style="font-size: 1.1rem; padding: 10px 20px;" onclick="checkAnswers()">Ellenőrzés ✨</button>
+            <button id="btn-show-key" class="btn btn-dark" style="font-size: 1.1rem; padding: 10px 20px; display: none;" onclick="toggleAnswerKey()">Megoldókulcs 🔑</button>
+        </div>
+    </div>
+
+<script>
+let currentMode = 'individual';
+let generatedTasks = [];
+let answerKeyVisible = false;
+
+// Adatbázis az 1. szinthez (Tulajdonnév fajtája)
+const level1Data = [
+    { name: "Petőfi Sándor", category: "Személynév" },
+    { name: "Arany János", category: "Személynév" },
+    { name: "Kossuth Lajos", category: "Személynév" },
+    { name: "Balaton", category: "Földrajzi név" },
+    { name: "Budapest", category: "Földrajzi név" },
+    { name: "Magas-Tátra", category: "Földrajzi név" },
+    { name: "Tisza", category: "Földrajzi név" },
+    { name: "Frakk", category: "Állatnév" },
+    { name: "Buksi", category: "Állatnév" },
+    { name: "Egri csillagok", category: "Cím / Irodalmi alkotás" },
+    { name: "Tüskevár", category: "Cím / Irodalmi alkotás" },
+    { name: "Puskás Aréna", category: "Intézménynév" },
+    { name: "Nemzeti Múzeum", category: "Intézménynév" }
+];
+
+const categoriesList = [
+    "Személynév",
+    "Földrajzi név",
+    "Állatnév",
+    "Cím / Irodalmi alkotás",
+    "Intézménynév"
+];
+
+// Adatbázis a 2. szinthez (Mondatok hiányos kezdőbetűkkel)
+const level2Data = [
+    { sentence: "A [INPUT]alaton Magyarország legnagyobb tava.", target: "B", hint: "Földrajzi név kezdőbetűje" },
+    { sentence: "[INPUT]etőfi Sándor Kiskőrösön született.", target: "P", hint: "Személynév kezdőbetűje" },
+    { sentence: "A [INPUT]agas-Tátra csúcsai lenyűgözőek.", target: "M", hint: "Földrajzi név kezdőbetűje" },
+    { sentence: "Budapesten folyik keresztül a [INPUT]una.", target: "D", hint: "Földrajzi név kezdőbetűje" },
+    { sentence: "A [INPUT]gri csillagok Gárdonyi Géza híres regénye.", target: "E", hint: "Cím kezdőbetűje" },
+    { sentence: "Kiscicánk, [INPUT]raks nagyon játékos.", target: "F", hint: "Állatnév kezdőbetűje" },
+    { sentence: "A [INPUT]erényi János Alapiskola diákjai versenyeznek.", target: "M", hint: "Intézménynév kezdőbetűje" },
+    { sentence: "Szent [INPUT]stván volt az első magyar király.", target: "I", hint: "Személynév kezdőbetűje" },
+    { sentence: "A [INPUT]isza folyó a Dunába torkollik.", target: "T", hint: "Földrajzi név kezdőbetűje" },
+    { sentence: "Hétvégén meglátogatjuk a [INPUT]egyes-kőt.", target: "M", hint: "Földrajzi név kezdőbetűje" },
+    { sentence: "A [INPUT]uskás Aréna Budapesten található.", target: "P", hint: "Intézménynév kezdőbetűje" },
+    { sentence: "A [INPUT]üskevár című könyvet Fekete István írta.", target: "T", hint: "Cím kezdőbetűje" },
+    { sentence: "Barátom kutyáját [INPUT]uksiznak hívják.", target: "B", hint: "Állatnév kezdőbetűje" },
+    { sentence: "[INPUT]arany János nagyszerű balladaíró volt.", target: "A", hint: "Személynév kezdőbetűje" },
+    { sentence: "A [INPUT]emzeti Múzeum lépcsőjén ünnepelnek március 15-én.", target: "N", hint: "Intézménynév kezdőbetűje" }
+];
+
+function setWorkMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-mode-ind').classList.toggle('active', mode === 'individual');
+    document.getElementById('btn-mode-grp').classList.toggle('active', mode === 'group');
+    
+    const nameGroup = document.getElementById('student-name-group');
+    const mainArea = document.getElementById('main-content-area');
+    const checkBtn = document.getElementById('btn-check');
+    const keyBtn = document.getElementById('btn-show-key');
+    document.getElementById('summary-banner').style.display = 'none';
+
+    if (mode === 'group') {
+        nameGroup.style.display = 'none';
+        mainArea.classList.add('group-mode');
+        checkBtn.style.display = 'none';
+        keyBtn.style.display = 'inline-flex';
+    } else {
+        nameGroup.style.display = 'flex';
+        mainArea.classList.remove('group-mode');
+        checkBtn.style.display = 'inline-flex';
+        keyBtn.style.display = 'none';
+    }
+    generateNewSeries();
+}
+
+function generateNewSeries() {
+    if (currentMode === 'individual') {
+        const name = document.getElementById('student-name').value.trim();
+        if (!name) {
+            alert('Kérlek, add meg a tanuló nevét az egyéni munkához!');
+            return;
+        }
+    }
+
+    const count = parseInt(document.getElementById('count-select').value);
+    const topic = document.getElementById('topic-select').value;
+
+    generatedTasks = [];
+    answerKeyVisible = false;
+    document.getElementById('summary-banner').style.display = 'none';
+
+    if (topic === 'level1') {
+        // Véletlenszerű kiválasztás az 1. szintre
+        let shuffled = [...level1Data].sort(() => 0.5 - Math.random());
+        let selected = shuffled.slice(0, count);
+
+        selected.forEach((item, idx) => {
+            generatedTasks.push({
+                type: 'level1',
+                questionText: `Milyen tulajdonnév-fajtába tartozik az alábbi kifejezés? <strong>"${item.name}"</strong>`,
+                correctAnswer: item.category,
+                options: [...categoriesList].sort(() => 0.5 - Math.random()),
+                explanation: `A(z) "${item.name}" egy ${item.category.toLowerCase()}.`
+            });
+        });
+    } else {
+        // Véletlenszerű kiválasztás a 2. szintre
+        let shuffled = [...level2Data].sort(() => 0.5 - Math.random());
+        let selected = shuffled.slice(0, count);
+
+        selected.forEach((item, idx) => {
+            generatedTasks.push({
+                type: 'level2',
+                sentenceTemplate: item.sentence,
+                correctAnswer: item.target,
+                explanation: `A helyes kezdőbetű nagybetűs tulajdonnév miatt: <strong>${item.target}</strong>.`
+            });
+        });
+    }
+
+    renderTasks();
+}
+
+function renderTasks() {
+    const wrapper = document.getElementById('tasks-wrapper');
+    wrapper.innerHTML = '';
+
+    const name = document.getElementById('student-name').value.trim();
+    document.getElementById('display-student-info').innerText = (currentMode === 'individual' && name) ? `Tanuló: ${name}` : '';
+
+    generatedTasks.forEach((task, idx) => {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+
+        let inputOrSolution = '';
+
+        if (task.type === 'level1') {
+            if (currentMode === 'individual') {
+                let optionsHtml = `<select id="ans-${idx}" style="max-width: 220px;"><option value="">-- Válassz --</option>`;
+                task.options.forEach(opt => {
+                    optionsHtml += `<option value="${opt}">${opt}</option>`;
+                });
+                optionsHtml += `</select>`;
+                inputOrSolution = optionsHtml;
+            } else {
+                inputOrSolution = `<span class="group-solution" id="sol-${idx}" style="visibility: ${answerKeyVisible ? 'visible' : 'hidden'}; color: var(--success); font-weight: bold;">= ${task.correctAnswer}</span>`;
+            }
+
+            card.innerHTML = `
+                <div class="task-main-row">
+                    <span><strong>${idx + 1}.</strong> ${task.questionText}</span>
+                    ${inputOrSolution}
+                </div>
+                <div class="solution-breakdown" id="breakdown-${idx}">
+                    <strong>Megoldás:</strong> 
+                    <div>Helyes kategória: <strong>${task.correctAnswer}</strong></div>
+                    <div>${task.explanation}</div>
+                </div>
+            `;
+        } else {
+            // Level 2: Mondat helyesírási dobozzal
+            let formattedSentence = task.sentenceTemplate;
+            if (currentMode === 'individual') {
+                formattedSentence = formattedSentence.replace('[INPUT]', `<input type="text" class="letter-input" id="ans-${idx}" maxlength="1">`);
+            } else {
+                let displayLetter = answerKeyVisible ? `<strong style="color:var(--success);">${task.correctAnswer}</strong>` : `[ ${task.correctAnswer} ]`;
+                formattedSentence = formattedSentence.replace('[INPUT]', displayLetter);
+            }
+
+            card.innerHTML = `
+                <div class="task-main-row" style="align-items: center;">
+                    <span><strong>${idx + 1}.</strong> ${formattedSentence}</span>
+                </div>
+                <div class="solution-breakdown" id="breakdown-${idx}">
+                    <strong>Megoldás:</strong> 
+                    <div>Helyes kezdőbetű: <strong>${task.correctAnswer}</strong></div>
+                    <div>${task.explanation}</div>
+                </div>
+            `;
+        }
+
+        wrapper.appendChild(card);
+    });
+}
+
+function toggleAnswerKey() {
+    answerKeyVisible = !answerKeyVisible;
+    renderTasks();
+}
+
+function checkAnswers() {
+    let correct = 0;
+    generatedTasks.forEach((task, idx) => {
+        const breakdownBox = document.getElementById(`breakdown-${idx}`);
+        const inputElem = document.getElementById(`ans-${idx}`);
+        if (!inputElem) return;
+
+        let userVal = inputElem.value.trim();
+        let correctVal = task.correctAnswer.trim();
+
+        let isCorrect = (userVal.toLowerCase() === correctVal.toLowerCase());
+
+        if (task.type === 'level1') {
+            isCorrect = (userVal === correctVal);
+        }
+
+        if (isCorrect) {
+            correct++;
+            inputElem.style.borderColor = 'var(--success)';
+            inputElem.style.backgroundColor = '#E8F8F5';
+            if (breakdownBox) breakdownBox.style.display = 'none';
+        } else {
+            inputElem.style.borderColor = 'var(--danger)';
+            inputElem.style.backgroundColor = '#FDEDEC';
+            if (breakdownBox) breakdownBox.style.display = 'flex';
+        }
+    });
+
+    const total = generatedTasks.length;
+    const name = document.getElementById('student-name').value.trim() || 'Tanuló';
+    const percent = Math.round((correct / total) * 100);
+
+    const banner = document.getElementById('summary-banner');
+    document.getElementById('summary-title').innerText = `Eredményértékelés - ${name}`;
+    document.getElementById('summary-details').innerHTML = `Pontszám: ${correct} / ${total} (${percent}%)`;
+    banner.style.display = 'flex';
+
+    document.getElementById('
